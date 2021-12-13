@@ -11,4 +11,7 @@ const octopusesString = `
 3473331514
 `;
 
-exports.inputOctopuses = octopusesString.split("\n").filter(Boolean).map(row => row.split("").map(Number));
+exports.inputOctopuses = octopusesString
+  .split("\n")
+  .filter(Boolean)
+  .map((row) => row.split("").map(Number));

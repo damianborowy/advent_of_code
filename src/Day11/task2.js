@@ -1,6 +1,5 @@
 const { inputOctopuses } = require("./inputData");
 
-const STEPS = 100;
 const FLASH_THRESHOLD = 9;
 
 function flashOctopuses(octopuses) {
@@ -34,8 +33,9 @@ function flashOctopuses(octopuses) {
     }
   }
 
-  while (step < STEPS) {
+  while (flashesCount !== octopuses.flat().length) {
     const flashedOctopusesPositions = [];
+    flashesCount = 0;
 
     for (let row = 0; row < octopuses.length; row++) {
       for (let column = 0; column < octopuses[row].length; column++) {
@@ -52,7 +52,7 @@ function flashOctopuses(octopuses) {
     step++;
   }
 
-  return flashesCount;
+  return step;
 }
 
 const flashesCount = flashOctopuses(inputOctopuses);
