@@ -11,7 +11,7 @@ function flashOctopuses(octopuses) {
   function flash({ row, column }) {
     if (!resultOctopuses?.[row]?.[column]) return;
 
-    if (resultOctopuses[row][column] <= 9) {
+    if (resultOctopuses[row][column] <= FLASH_THRESHOLD) {
       resultOctopuses[row][column] += 1;
     }
 
@@ -29,7 +29,7 @@ function flashOctopuses(octopuses) {
         { row: row + 1, column: column },
         { row: row + 1, column: column + 1 },
       ]
-        .filter(({ row, column }) => resultOctopuses?.[row]?.[column] <= 9)
+        .filter(({ row, column }) => resultOctopuses?.[row]?.[column] <= FLASH_THRESHOLD)
         .forEach(flash);
     }
   }
