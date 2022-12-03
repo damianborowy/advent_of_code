@@ -1,10 +1,15 @@
-input <- scan("input.txt", what="", sep="\n")
+install.packages("magrittr")
+library(magrittr)
+
+current_work_directory = getwd()
+file_path = "/src/2022/day03/input.txt"
+total_path = paste(current_work_directory, file_path, sep="")
+
+input <- scan(total_path, what="", sep="")
 
 split_string <- function(text, separator) strsplit(text, separator)[[1]]
 
-rows <- input %>%
-    split_string("\n") %>%
-    sapply(function(row) split_string(row, ""))
+rows <- sapply(input, function(row) split_string(row, ""))
 
 map_char_to_ascii_code <- function(char) sapply(char, utf8ToInt)
 
