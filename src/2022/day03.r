@@ -307,14 +307,16 @@ rows <- input %>%
 
 map_char_to_ascii_code <- function(char) sapply(char, utf8ToInt)
 
-map_to_item_priorities <- function(items) items %>% 
-    sapply(map_char_to_ascii_code) %>%
-    sapply(function(char_code) if (char_code >= 97) char_code - 96 else char_code - 38)
+map_to_item_priorities <- function(items) 
+    items %>% 
+        sapply(map_char_to_ascii_code) %>%
+        sapply(function(char_code) if (char_code >= 97) char_code - 96 else char_code - 38)
 
-sum_priorities <- function(items) items %>%
-    sapply(map_to_item_priorities) %>%
-    unlist %>%
-    sum
+sum_priorities <- function(items) 
+    items %>%
+        sapply(map_to_item_priorities) %>%
+        unlist %>%
+        sum
 
 get_intersecting_parts <- function(rows) 
     sapply(rows, function(parts) Reduce(intersect, parts))
