@@ -1,84 +1,30 @@
-local function map(f, array)
-  local new_array = {}
-
-  for key, value in pairs(array) do
-    new_array[key] = f(value)
-  end
-
-  return new_array
-end
-
-local function filter(f, array)
-  local new_array = {}
-  local new_index = 1
-
-  for _key, value in pairs(array) do
-    if f(value) then
-      new_array[new_index] = value
-      new_index = new_index + 1
+local function contains(table, element)
+  for _, value in pairs(table) do
+    if value == element then
+      return true
     end
   end
-
-  return new_array
+  return false
 end
 
-local function head(array)
-  return array[1]
-end
-
-local function tail(array)
-  if #array < 1 then
-    return nil
-
-  else
-    local new_array = {}
-    local arraysize = #array
-    local k = 2
-
-    while (k <= arraysize) do
-      table.insert(new_array, k - 1, array[k])
-      k = k + 1
-    end
-
-    return new_array
-  end
-end
-
-local function foldr(f, acc, array)
-  for _key, value in pairs(array) do
-    acc = f(acc, value)
-  end
-
-  return acc
-end
-
-local function reduce(f, array)
-  return foldr(f, head(array), tail(array))
-end
-
-local function split(inputstr, sep)
-  sep = sep or '%s'
+local function split_string_into_chars(input_string)
   local result = {}
 
-  for field, s in string.gmatch(inputstr, "([^" .. sep .. "]*)(" .. sep .. "?)") do
-    table.insert(result, field)
+  for letter in input_string:gmatch(".") do table.insert(result, letter) end
 
-    if s == "" then return result end
-  end
+  return result
 end
 
--- TODO:: REMOVE
-local function dump(o)
-  if type(o) == 'table' then
-    local s = '{ '
-    for k, v in pairs(o) do
-      if type(k) ~= 'number' then k = '"' .. k .. '"' end
-      s = s .. '[' .. k .. '] = ' .. dump(v) .. ', '
-    end
-    return s .. '} '
+local function is_every_value_unique(array)
+  local values = {}
+
+  for _key, value in pairs(array) do
+    if contains(values, value) then return false end
+
+    table.insert(values, value)
   end
 
-  return tostring(o)
+  return true
 end
 
 local function read_file(path)
@@ -95,14 +41,30 @@ local input = read_file("input.txt");
 
 if not input then return nil end
 
-local input_rows = split(input, "\n")
+local function find_marker(target_length)
+  local current_buffer = {}
+  local total_index = 0
 
-print(
-  dump(
-    foldr(function(acc, elem) return acc + elem end, 0,
-      filter(function(elem) return elem % 2 == 0 end,
-        map(tonumber, input_rows)
-      )
-    )
-  )
-);
+  for _key, value in pairs(split_string_into_chars(input)) do
+    total_index = total_index + 1
+    table.insert(current_buffer, value)
+
+    if #current_buffer == target_length and is_every_value_unique(current_buffer) then
+      break
+    end
+
+    if #current_buffer >= target_length then
+      table.remove(current_buffer, 1)
+    end
+  end
+
+  return total_index
+end
+
+-- PART 1
+
+print(find_marker(4))
+
+-- PART 2
+
+print(find_marker(14))
