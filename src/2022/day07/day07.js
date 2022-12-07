@@ -998,8 +998,8 @@ let currentListingSize = 0;
 
 const dirSizes = {};
 
-for (let i = 0; i < x.length + 1; i++) {
-    const command = x[i] ?? [];
+for (let i = 0; i < x.length; i++) {
+    const command = x[i];
 
     if (command[0] === "dir") {
         continue;
@@ -1038,6 +1038,10 @@ for (let i = 0; i < x.length + 1; i++) {
             isListing = true;
         }
     }
+}
+
+if (isListing) {
+  dirSizes[cwd] = currentListingSize;
 }
 
 const dirsWithChildrenSizes = {};

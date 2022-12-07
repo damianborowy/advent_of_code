@@ -1,4 +1,4 @@
-uses 
+uses
     SysUtils,
     StrUtils
 ;
