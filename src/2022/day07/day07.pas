@@ -1,9 +1,15 @@
-uses SysUtils;
+uses 
+    SysUtils,
+    StrUtils
+;
 
 var
   input: string;
   inputArray: array of string;
   i: Integer;
+  path: string;
+  isListing: boolean;
+  currentListingSize: Integer;
 
 procedure ReadStdin;
 begin
@@ -23,5 +29,5 @@ begin
   ReadStdin();
   
   for i := 0 to High(inputArray) do
-    WriteLn(inputArray[i]);
+    WriteLn(inputArray[i].Split(' '));
 end.
