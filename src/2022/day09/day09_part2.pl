@@ -36,8 +36,6 @@ sub is_tail_close_to_next_element
   @target = @{$knots[$_[0]]};
   @source = @{$knots[$_[0] - 1]};
 
-  # print $source[0], ", ", $target[0], ", ", abs($source[0] - $target[0]), abs($source[1] - $target[1]) <= 1, "\n";
-
   return (abs($source[0] - $target[0]) <= 1 && abs($source[1] - $target[1]) <= 1);
 }
 
@@ -57,18 +55,17 @@ while(<FH>){
     move_head($instructions[0]);
 
     for my $tail_index (1..$length - 1) {
-      @knot = @{$knots[$tail_index]};
       @previous_knot = @{$knots[$tail_index - 1]};
 
       if (!is_tail_close_to_next_element($tail_index)) {
-        $knot[0] += sign($previous_knot[0] - $knot[0]);
-        $knot[1] += sign($previous_knot[1] - $knot[1]);
-
-        dump(@knot);
+        @{$knots[$tail_index]}[0] += sign($previous_knot[0] - @{$knots[$tail_index]}[0]);
+        @{$knots[$tail_index]}[1] += sign($previous_knot[1] - @{$knots[$tail_index]}[1]);
       }
 
       if ($tail_index == $length - 1) {
-        $visited_places{"$knot[0] - $knot[1]"} = ();
+        $knot_x = @{$knots[$tail_index]}[0];
+        $knot_y = @{$knots[$tail_index]}[1];
+        $visited_places{"$knot_x - $knot_y"} = ();
       }
     }
   }
