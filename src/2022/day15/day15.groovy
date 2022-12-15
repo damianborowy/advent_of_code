@@ -2,11 +2,11 @@ import java.util.*;
 import java.util.stream.*;
 import java.lang.Math;
 
-public record Point(int x, int y) {}
-public record Row(Point sensor, Point beacon, int distance) {}
-public record Interval(int start, int end) {}
+public record Point(long x, long y) {}
+public record Row(Point sensor, Point beacon, long distance) {}
+public record Interval(long start, long end) {}
 
-def dist = { int x1, int y1, int x2, int y2 -> Math.abs(y2 - y1) + Math.abs(x2 - x1) };
+def dist = { long x1, long y1, long x2, long y2 -> Math.abs(y2 - y1) + Math.abs(x2 - x1) };
 
 def file = new File("input.txt");
 def input = new ArrayList();
@@ -15,7 +15,10 @@ def line;
 file.withReader { reader ->
   while ((line = reader.readLine()) != null) {
     def numbers = line.replaceAll(/[^\d-]/, ",").split(",");
-    def coordinates = Stream.of(numbers).filter(number -> number != "").map(Integer::parseInt).collect(Collectors.toList());
+    def coordinates = Stream.of(numbers)
+      .filter(number -> number != "")
+      .map(Integer::parseInt)
+      .collect(Collectors.toList());
 
     input.add(
       new Row(
@@ -27,7 +30,7 @@ file.withReader { reader ->
   }
 };
 
-def getIntervals(int y, ArrayList<Row> input) {
+def getIntervals(long y, ArrayList<Row> input) {
   return input.stream()
     .map(row -> {
       def spareX = row.distance - Math.abs(row.sensor.y - y);
@@ -47,26 +50,29 @@ def regionsIntersect(Interval region1, Interval region2) {
 }
 
 def intersectionWithRegionsVolume(Interval interval, ArrayList<Interval> regions) {
-  return IntStream.range(0, regions.size())
+  return LongStream.range(0L, new Long(regions.size()))
     .map(index -> {
-      def region = regions.get(index);
+      def region = regions.get(Math.toIntExact(index));
 
-      if (!regionsIntersect(interval, region)) return 0;
+      if (!regionsIntersect(interval, region)) return 0L;
 
-      def minMaxBounds = new Interval(start: Math.max(region.start, interval.start), end: Math.min(region.end, interval. end));
-      ArrayList<Interval> subRegions = regions.subList(index + 1, regions.size());
+      def minMaxBounds = new Interval(
+        start: Math.min(region.end, interval. end), 
+        end: Math.max(region.start, interval.start)
+      );
+      ArrayList<Interval> subRegions = regions.subList(Math.toIntExact(index + 1), Math.toIntExact(regions.size()));
 
       return volume(minMaxBounds) - intersectionWithRegionsVolume(minMaxBounds, subRegions);
     })
-    .reduce(0, Integer::sum);
+    .reduce(0, Long::sum);
 }
 
 // PART 1
 
 def part1(ArrayList<Row> input) {
-  int nonBeaconablePlacesCount = 0;
+  long nonBeaconablePlacesCount = 0;
   def regions = new ArrayList<Interval>();
-  int TARGET_Y = 2000000;
+  long TARGET_Y = 2000000;
 
   for (var interval in getIntervals(TARGET_Y, input)) {
     nonBeaconablePlacesCount += volume(interval) - intersectionWithRegionsVolume(interval, regions);
@@ -80,24 +86,29 @@ println "Part 1: " + part1(input);
 
 // PART 2
 
-def countBlindsInRow(int y, int max, int min, ArrayList<Row> input) {
+def countBlindsInRow(long y, long min, long max, ArrayList<Row> input) {
   return max - intersectionWithRegionsVolume(new Interval(start: min, end: max), getIntervals(y, input));
 }
 
 def part2(ArrayList<Row> input) {
-  int MAX = 4000000;
-  int MIN = 0;
-  int y = 0;
+  long MIN = 0;
+  long MAX = 4000000;
 
-  while (countBlindsInRow(y, MAX, MIN, input) != 0) y++;
+  def targetY = LongStream.range(MIN, MAX)
+    .parallel()
+    .filter(y -> countBlindsInRow(y, MIN, MAX, input) != 0)
+    .findFirst()
+    .orElse(0L);
 
-  def intervals = getIntervals(y, input);
+  def intervals = getIntervals(targetY, input);
 
-  for (int x = MIN; x <= MAX; x++) {
-    if (intervals.stream().allMatch(interval -> interval.start > x || interval.end < x)) {
-      return x * MAX * y;
-    }
-  }
+  def targetX = LongStream.range(MIN, MAX)
+    .parallel()
+    .filter(x -> intervals.stream().allMatch(interval -> interval.start > x || interval.end < x))
+    .findFirst()
+    .orElse(0L);
+  
+  return 1L * targetX * MAX + targetY;
 }
 
 println "Part 2: " + part2(input);
