@@ -194,13 +194,14 @@ fn part1(input: &Vec<String>) -> i32 {
                                 let mut new_pos = position.clone();
 
                                 match direction {
-                                    right => new_pos.x = minmax_x[&position.x].0,
-                                    left => new_pos.x = minmax_x[&position.x].1,
-                                    down => new_pos.y = minmax_y[&position.y].0,
-                                    up => new_pos.y = minmax_y[&position.y].1,
+                                    Point { x: 1, y: 0 } => new_pos.x = minmax_x[&position.y].0,
+                                    Point { x: -1, y: 0 } => new_pos.x = minmax_x[&position.y].1,
+                                    Point { x: 0, y: 1 } => new_pos.y = minmax_y[&position.x].0,
+                                    Point { x: 0, y: -1 } => new_pos.y = minmax_y[&position.x].1,
+                                    _ => {}
                                 };
 
-                                if tiles.get(&new_pos).is_some() {
+                                if *tiles.get(&new_pos).unwrap_or(&false) {
                                     (new_pos, direction)
                                 } else {
                                     (position, direction)
