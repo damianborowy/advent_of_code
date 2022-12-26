@@ -1,11 +1,13 @@
 extern crate overload;
+use grouping_by::GroupingBy;
+use itertools::Itertools;
 use overload::overload;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::ops;
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Ord, PartialOrd)]
 struct Point {
     x: i32,
     y: i32,
@@ -18,15 +20,15 @@ overload!((a: Point) + (b: Point) -> Point {
 impl Point {
     fn clockwise(&self) -> Point {
         Point {
-            x: self.x,
-            y: -self.y,
+            x: -self.y,
+            y: self.x,
         }
     }
 
     fn counter_clockwise(&self) -> Point {
         Point {
-            x: -self.x,
-            y: self.y,
+            x: self.y,
+            y: -self.x,
         }
     }
 
@@ -123,19 +125,99 @@ fn is_digit(num_string: &String) -> bool {
     num_string.parse::<i32>().is_ok()
 }
 
+fn get_grouped_tiles_max(
+    tiles: &HashMap<Point, bool>,
+    get_grouping_key: fn(&Point) -> i32,
+    get_map_key: fn(&Point) -> i32,
+) -> HashMap<i32, (i32, i32)> {
+    tiles
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .grouping_by(|point| get_grouping_key(&point))
+        .into_iter()
+        .map(|(key, points)| {
+            (
+                key,
+                points
+                    .into_iter()
+                    .map(|point| get_map_key(&point))
+                    .minmax()
+                    .into_option()
+                    .unwrap(),
+            )
+        })
+        .collect()
+}
+
+fn get_top_left_point(tiles: &HashMap<Point, bool>) -> Point {
+    tiles
+        .keys()
+        .cloned()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .filter(|point| point.y == 0)
+        .min_by_key(|point| point.x)
+        .unwrap()
+}
+
 fn part1(input: &Vec<String>) -> i32 {
     let moves = parse_moves(&input);
     let tiles = parse_tiles(&input);
-    
-    // TODO:: implement
 
-    return 5;
+    let minmax_x = get_grouped_tiles_max(&tiles, |point| point.y, |point| point.x);
+    let minmax_y = get_grouped_tiles_max(&tiles, |point| point.x, |point| point.y);
+
+    let right = Point { x: 1, y: 0 };
+    let down = Point { x: 0, y: 1 };
+    let left = Point { x: -1, y: 0 };
+    let up = Point { x: 0, y: -1 };
+    let facing = vec![&right, &down, &left, &up];
+    let top_left = get_top_left_point(&tiles);
+
+    let (position, direction) =
+        moves
+            .iter()
+            .fold(
+                (top_left, right),
+                |(position, direction), &current_move| match current_move {
+                    'L' => (position, direction.counter_clockwise()),
+                    'R' => (position, direction.clockwise()),
+                    _ => {
+                        let next = position + direction;
+
+                        match tiles.get(&next) {
+                            Some(true) => (next, direction),
+                            Some(false) => (position, direction),
+                            None => {
+                                let mut new_pos = position.clone();
+
+                                match direction {
+                                    right => new_pos.x = minmax_x[&position.x].0,
+                                    left => new_pos.x = minmax_x[&position.x].1,
+                                    down => new_pos.y = minmax_y[&position.y].0,
+                                    up => new_pos.y = minmax_y[&position.y].1,
+                                };
+
+                                if tiles.get(&new_pos).is_some() {
+                                    (new_pos, direction)
+                                } else {
+                                    (position, direction)
+                                }
+                            }
+                        }
+                    }
+                },
+            );
+
+    position.score() + facing.iter().position(|&face| face == &direction).unwrap() as i32
 }
 
 fn part2(input: &Vec<String>, block: i32) -> i32 {
     // TODO:: implement
 
-    return 10;
+    0
 }
 
 fn main() {
