@@ -2,7 +2,7 @@ extern crate overload;
 use grouping_by::GroupingBy;
 use itertools::Itertools;
 use overload::overload;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::ops;
@@ -37,6 +37,7 @@ impl Point {
     }
 }
 
+#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone)]
 struct Vector {
     x: i32,
     y: i32,
@@ -61,6 +62,7 @@ impl Vector {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 struct Info {
     point: Point,
     i: Vector,
@@ -216,9 +218,118 @@ fn part1(input: &Vec<String>) -> i32 {
 }
 
 fn part2(input: &Vec<String>, block: i32) -> i32 {
-    // TODO:: implement
+    let moves = parse_moves(&input);
+    let tiles = parse_tiles(&input);
 
-    0
+    let scale_ij = block - 1;
+    let scale_k = block + 1;
+    let starting_position = Vector {
+        x: -scale_ij,
+        y: -scale_ij,
+        z: -scale_k,
+    };
+    let starting_direction = Vector { x: 2, y: 0, z: 0 };
+
+    let top_left = get_top_left_point(&tiles);
+    let start = Info {
+        point: top_left,
+        i: Vector { x: 1, y: 0, z: 0 },
+        j: Vector { x: 0, y: 1, z: 0 },
+        k: Vector { x: 0, y: 0, z: 1 },
+    };
+
+    let mut todo = vec![start];
+    let mut visited = HashSet::from([top_left]);
+    let mut points: HashMap<Vector, Info> = HashMap::new();
+
+    while let Some(Info { point, i, j, k }) = todo.pop() {
+        for x in 0..block {
+            for y in 0..block {
+                let key = (i * (2 * x - scale_ij)) + (j * (2 * y - scale_ij)) + (k * -scale_k);
+                
+                points.insert(
+                    key,
+                    Info {
+                        point: point + Point { x, y },
+                        i,
+                        j,
+                        k,
+                    },
+                );
+            }
+        }
+
+        let neighbors = vec![
+            Info {
+                point: point + Point { x: -block, y: 0 },
+                i: j.cross(i),
+                j,
+                k: j.cross(k),
+            },
+            Info {
+                point: point + Point { x: block, y: 0 },
+                i: i.cross(j),
+                j,
+                k: k.cross(j),
+            },
+            Info {
+                point: point + Point { x: 0, y: -block },
+                i,
+                j: j.cross(i),
+                k: k.cross(i),
+            },
+            Info {
+                point: point + Point { x: 0, y: block },
+                i,
+                j: i.cross(j),
+                k: i.cross(k),
+            },
+        ];
+
+        for neighbor in neighbors {
+            if tiles.contains_key(&neighbor.point) && !visited.contains(&neighbor.point) {
+                todo.push(neighbor);
+                visited.insert(neighbor.point);
+            }
+        }
+    }
+
+    let (position, direction) = moves.iter().fold(
+        (starting_position, starting_direction),
+        |(position, direction), &current_move| match current_move {
+            'L' => (position, direction.cross(points[&position].k)),
+            'R' => (position, points[&position].k.cross(direction)),
+            _ => {
+                let next = position + direction;
+
+                if points.contains_key(&next) {
+                    if tiles[&points[&next].point] {
+                        (next, direction)
+                    } else {
+                        (position, direction)
+                    }
+                } else {
+                    let wrap_direction = points[&position].k * 2;
+                    let wrap_position = next + wrap_direction;
+
+                    if tiles[&points[&wrap_position].point] {
+                        (wrap_position, wrap_direction)
+                    } else {
+                        (position, direction)
+                    }
+                }
+            }
+        },
+    );
+
+    let Info { point, i, j, k: _ } = *points.get(&position).unwrap();
+    let vectors = vec![i * 2, j * 2, i * -2, j * -2];
+
+    point.score()
+        + vectors
+            .iter()
+            .position(|&vector| vector == direction)
+            .unwrap() as i32
 }
 
 fn main() {
