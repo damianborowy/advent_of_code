@@ -1,10 +1,11 @@
 # use strict;
 use warnings;
 use feature qw(switch);
-use Data::Dump qw(dump);
+
+# Change $length to 2 for part1
+my $length = 10;
 
 my $filename = 'input.txt';
-my $length = 10;
 my @knots;
 my %visited_places = ();
 
