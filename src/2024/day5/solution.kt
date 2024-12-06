@@ -57,13 +57,13 @@ class Day5 {
             val sumOfValidUpdatesMiddlePages = validUpdates
                 .sumOf { it.elementAt(ceil((it.size / 2).toDouble()).toInt()) }
 
-            println("Day 4, part 1: $sumOfValidUpdatesMiddlePages")
+            println("Day 5, part 1: $sumOfValidUpdatesMiddlePages")
 
             val sumOfUnorderedMiddlePages = unorderedUpdates
                 .map { fixPagesOrder(it, rules) }
                 .sumOf { it.elementAt(ceil((it.size / 2).toDouble()).toInt()) }
 
-            println("Day 4, part 2: $sumOfUnorderedMiddlePages")
+            println("Day 5, part 2: $sumOfUnorderedMiddlePages")
         }
     }
 }
