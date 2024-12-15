@@ -25,35 +25,46 @@ class Day12 {
         private val STRAIGHT_DIRECTIONS = listOf(Direction.TOP, Direction.RIGHT, Direction.BOTTOM, Direction.LEFT)
 
         private val CORNERS = listOf(
+            // Top left
             Corner(
                 inner = SingleCornerCheck(
-                    required = setOf(Direction.TOP_RIGHT), forbidden = setOf(Direction.RIGHT)
+                    required = setOf(Direction.TOP, Direction.LEFT),
+                    forbidden = setOf(Direction.TOP_LEFT)
                 ), outer = SingleCornerCheck(
                     required = emptySet(), forbidden = setOf(
                         Direction.TOP, Direction.LEFT
                     )
                 )
             ),
+            // Top right
             Corner(
                 inner = SingleCornerCheck(
-                    required = setOf(Direction.BOTTOM_RIGHT),
-                    forbidden = setOf(Direction.BOTTOM)
+                    required = setOf(Direction.TOP, Direction.RIGHT),
+                    forbidden = setOf(Direction.TOP_RIGHT)
                 ), outer = SingleCornerCheck(
                     required = emptySet(), forbidden = setOf(
                         Direction.TOP, Direction.RIGHT
                     )
                 )
             ),
+            // Bottom right
             Corner(
-                inner = SingleCornerCheck(required = setOf(Direction.BOTTOM_LEFT), forbidden = setOf(Direction.LEFT)),
+                inner = SingleCornerCheck(
+                    required = setOf(Direction.BOTTOM, Direction.RIGHT),
+                    forbidden = setOf(Direction.BOTTOM_RIGHT)
+                ),
                 outer = SingleCornerCheck(
                     required = emptySet(), forbidden = setOf(
                         Direction.BOTTOM, Direction.RIGHT
                     )
                 )
             ),
+            // Bottom left
             Corner(
-                inner = SingleCornerCheck(required = setOf(Direction.TOP_LEFT), forbidden = setOf(Direction.LEFT)),
+                inner = SingleCornerCheck(
+                    required = setOf(Direction.BOTTOM, Direction.LEFT),
+                    forbidden = setOf(Direction.BOTTOM_LEFT)
+                ),
                 outer = SingleCornerCheck(
                     required = emptySet(), forbidden = setOf(
                         Direction.BOTTOM, Direction.LEFT
@@ -83,8 +94,6 @@ class Day12 {
             val sameTypeFields =
                 Direction.entries.mapNotNull { getTypeAtDirection(it.direction, point, fieldType, farm, true) }
 
-            if (sameTypeFields.size == 4) return 0
-
             val cornersCount = CORNERS.filter { (inner, outer) ->
                 listOf(inner, outer).any { (required, forbidden) ->
                     val areRequiredConditionsMet = required.all { sameTypeFields.contains(it.direction) }
@@ -101,7 +110,6 @@ class Day12 {
             val points = mutableSetOf<Point>()
             var area = 0
             var perimeter = 0
-            var cornersCount = 0
 
             fun traverseArea(point: Point) {
                 if (points.contains(point)) return
@@ -111,13 +119,14 @@ class Day12 {
 
                 area++
                 perimeter += 4 - sameTypeFields.size
-                cornersCount += getCornersCountAtPoint(point, fieldType, farm)
                 points.add(point)
 
                 sameTypeFields.forEach { traverseArea(it) }
             }
 
             traverseArea(startPoint)
+
+            var cornersCount = points.sumOf { getCornersCountAtPoint(it, fieldType, farm) }
 
             return Area(
                 points = points,
