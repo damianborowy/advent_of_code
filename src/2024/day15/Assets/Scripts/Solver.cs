@@ -115,6 +115,6 @@ public class Solver : MonoBehaviour
             return Mathf.Abs(Mathf.Floor(position.x)) + Mathf.Abs(Mathf.Floor(position.y)) * 100;
         });
         
-        print($"Day 15, part 1: {boxesGPSes.Sum()}");
+        print($"Day 15: {boxesGPSes.Sum()}");
     }
 }
