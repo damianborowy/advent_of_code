@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -10,18 +9,16 @@ public class Solver : MonoBehaviour
 {
     public TextAsset textFile;
     public Tilemap tilemap;
-    public bool doubleSizeMode = false;
-    
+    public bool doubleSizeMode;
     public GameObject playerPrefab, wallPrefab, boxPrefab;
     
-    private List<Vector2Int> _walls = new();
-    private List<Vector2Int> _boxes = new();
+    private readonly List<Vector2Int> _walls = new();
+    private readonly List<Vector2Int> _boxes = new();
+    private readonly List<Box> _boxObjects = new();
     private Vector2Int? _playerPosition;
     private Player _player;
-    private List<Box> _boxObjects = new();
-    
-    // Start is called before the first frame update
-    void Start()
+
+    private void Start()
     {
         var input = textFile.text.Split("\r\n\r\n");
         var gridRows = input[0].Split("\r\n");
@@ -32,7 +29,7 @@ public class Solver : MonoBehaviour
         StartCoroutine(PerformMovements(movements));
     }
 
-    void CalculateEntityPositions(string[] gridRows)
+    private void CalculateEntityPositions(string[] gridRows)
     {
         for (var rowIndex = 0; rowIndex < gridRows.Length; rowIndex++)
         {
@@ -46,13 +43,13 @@ public class Solver : MonoBehaviour
                 var point = new Vector2Int(colIndex, -rowIndex);
 
                 if (cell == '#') _walls.Add(point);
-                else if (cell is '[' or 'O') _boxes.Add(point);
+                else if (cell is ']' or 'O') _boxes.Add(point);
                 else if (cell == '@') _playerPosition = point;
             }
         }
     }
 
-    void PlaceEntities()
+    private void PlaceEntities()
     {
         foreach (var wallPosition in _walls)
         {
@@ -60,7 +57,8 @@ public class Solver : MonoBehaviour
         }
 
         _player = Instantiate(playerPrefab, (Vector2)_playerPosition!, Quaternion.identity).GetComponent<Player>();
-
+        _player.solver = this;
+        
         foreach (var boxPosition in _boxes)
         {
             var shiftedPosition = doubleSizeMode ? boxPosition - new Vector2(0.5f, 0) : boxPosition;
@@ -74,9 +72,8 @@ public class Solver : MonoBehaviour
             
             _boxObjects.Add(box);
             box.player = _player;
+            box.solver = this;
         }
-        
-        _player.SetBoxes(_boxObjects);
     }
     
     private IEnumerator PerformMovements(string movements)
@@ -108,13 +105,13 @@ public class Solver : MonoBehaviour
             }
         }
 
-        var boxesGPSes = _boxObjects.Select(box =>
+        var boxesGpsValues = _boxObjects.Select(box =>
         {
             var position = box.transform.position;
 
             return Mathf.Abs(Mathf.Floor(position.x)) + Mathf.Abs(Mathf.Floor(position.y)) * 100;
         });
         
-        print($"Day 15: {boxesGPSes.Sum()}");
+        print($"Day 15: {boxesGpsValues.Sum()}");
     }
 }

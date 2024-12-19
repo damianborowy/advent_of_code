@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rigidBody: {fileID: 6460234369711257695}
-  player: {fileID: 0}
+  solver: {fileID: 0}
+  player: {fileID: 5586757732276734767, guid: b9837523d62b73d4f8d37c29077f07a9, type: 3}
 --- !u!61 &6214706946905681092
 BoxCollider2D:
   m_ObjectHideFlags: 0
