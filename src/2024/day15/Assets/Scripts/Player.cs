@@ -7,12 +7,10 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public float moveSpeed = 20f;
-    public bool isMoving;
     public Vector2 lastPlayerMove;
     public Solver solver;
 
     private Vector2 _moveDirection;
-    private List<Box> _boxes;
     
     public IEnumerator MovePlayer(Vector2 direction)
     {
@@ -22,22 +20,6 @@ public class Player : MonoBehaviour
         lastPlayerMove = direction;
         
         yield return MoveToPosition(targetPosition);
-    }
-
-    public void FixedUpdate()
-    {
-        if (isMoving) return;
-        
-        _moveDirection = Vector2.zero;
-        if (Input.GetKeyDown(KeyCode.W)) _moveDirection = Vector2.up;
-        if (Input.GetKeyDown(KeyCode.S)) _moveDirection = Vector2.down;
-        if (Input.GetKeyDown(KeyCode.A)) _moveDirection = Vector2.left;
-        if (Input.GetKeyDown(KeyCode.D)) _moveDirection = Vector2.right;
-
-        if (_moveDirection == Vector2.zero) return;
-        
-        var targetPosition = (Vector2)transform.position + _moveDirection;
-        StartCoroutine(MoveToPosition(targetPosition));
     }
 
     private bool GetCanPlayerMoveSingleWidth(Vector2 direction, int boxWidth)
@@ -60,29 +42,54 @@ public class Player : MonoBehaviour
         _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
     };
 
-    private bool GetCanPlayerMoveHorizontal(Vector2 direction)
-    {
-        throw new NotImplementedException();
-    }
+    private bool GetCanPlayerMoveHorizontal(Vector2 direction) => GetCanPlayerMoveSingleWidth(direction, boxWidth: 2);
 
-    private bool GetCanPlayerMoveVertical(Vector2 direction) => GetCanPlayerMoveSingleWidth(direction, boxWidth: 2);
+    private bool GetCanPlayerMoveVertical(Vector2 direction)
+    {
+        var visitedPoints = new HashSet<Vector2>();
+        var queue = new Queue<Vector2>();
+        queue.Enqueue(transform.position);
+        
+        while (queue.Count > 0)
+        {
+            var position = queue.Dequeue();
+            var hits = Physics2D.RaycastAll(position, direction, 1);
+
+            var firstHit = hits.FirstOrDefault(hit => 
+                !hit.collider.gameObject.CompareTag("Player") &&
+                !Mathf.Approximately(hit.transform.position.y, position.y)
+            );
+            
+            var objectInFront = firstHit.collider?.gameObject;
+            
+            if (objectInFront is null) continue;
+            if (objectInFront.CompareTag("Wall")) return false;
+            if (!objectInFront.CompareTag("Box")) continue;
+            
+            var box = objectInFront.GetComponent<Box>();
+            var boxEdgePositions = box.GetDoubleBoxEdgeDirections();
+            boxEdgePositions.ForEach(boxPosition =>
+            {
+                if (visitedPoints.Contains(boxPosition)) return;
+                
+                queue.Enqueue(boxPosition);
+                visitedPoints.Add(boxPosition);
+            });
+        }
+        
+        return true;
+    }
     
     private bool CanPlayerMove(Vector2 direction) => solver.doubleSizeMode
         ? GetCanPlayerMoveDoubleWidth(direction)
         : GetCanPlayerMoveSingleWidth(direction, boxWidth: 1);
     
-    public void SetBoxes(List<Box> boxes) => _boxes = boxes;
-
     private IEnumerator MoveToPosition(Vector2 targetPosition)
     {
-        isMoving = true;
-        
         while ((Vector2)transform.position != targetPosition)
         {
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
             yield return null;
         }
-
-        isMoving = false;
     }
 }

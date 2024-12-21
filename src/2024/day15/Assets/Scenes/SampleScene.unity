@@ -494,7 +494,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textFile: {fileID: 4900000, guid: d0fe981d385f4c88befdbed5d4811712, type: 3}
   tilemap: {fileID: 539416684}
-  doubleSizeMode: 0
+  doubleSizeMode: 1
   playerPrefab: {fileID: 5712225291010054874, guid: b9837523d62b73d4f8d37c29077f07a9, type: 3}
   wallPrefab: {fileID: 4131904486403968600, guid: 7c8e6f3ee2bced64294c2b6786a6f194, type: 3}
   boxPrefab: {fileID: 7276387510550388537, guid: 586028b428d38574f84ef70aea03d295, type: 3}
