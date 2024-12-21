@@ -26,16 +26,6 @@ def find_symbol_position(symbol: str, keypad: list[list[str]]) -> Tuple[int, int
                 return row_index, col_index
 
 
-# @cache
-# def find_numerical_symbol_position(symbol: str) -> Tuple[int, int]:
-#     return find_symbol_position(symbol, numerical_keypad)
-#
-#
-# @cache
-# def find_directional_symbol_position(symbol: str) -> Tuple[int, int]:
-#     return find_symbol_position(symbol, directional_keypad)
-
-
 def get_element_at_point(keypad: list[list[str]], position: Tuple[int, int]) -> str | None:
     y, x = position
     row = get_element_at_index(keypad, y, [])
@@ -83,25 +73,7 @@ def find_paths(start_symbol: str, target_symbol: str, keypad: list[list[str]]) -
     shortest_path_len = min(len(path) for path in paths)
 
     return [get_path_symbols(path) for path in paths if len(path) == shortest_path_len]
-    # start_y, start_x = find_symbol_position(start_symbol, keypad)
-    # end_y, end_x = find_symbol_position(target_symbol, keypad)
-    # dy, dx = end_y - start_y, end_x - start_x
-    #
-    # row_moves = "v" * dy if dy >= 0 else "^" * (-dy)
-    # col_moves = ">" * dx if dx >= 0 else "<" * (-dx)
-    #
-    # if dy == dx == 0:
-    #     return [""]
-    # elif dy == 0:
-    #     return [col_moves]
-    # elif dx == 0:
-    #     return [row_moves]
-    # elif keypad[start_y][end_x] == "X":
-    #     return [row_moves + col_moves]
-    # elif keypad[end_y][start_x] == "X":
-    #     return [col_moves + row_moves]
-    # else:
-    #     return [row_moves + col_moves, col_moves + row_moves]
+
 
 @cache
 def find_numerical_paths(start_symbol: str, target_symbol: str) -> list[str]:
@@ -127,7 +99,20 @@ def join_segments(segments: list[list[str]]) -> list[str]:
         paths = segment_paths
 
     return paths
-    # return ["".join([segment[0] + "A" for segment in segments])]
+
+
+@cache
+def calculate_directional_paths_length(sequence: str, depth: int) -> int:
+    if depth == 0:
+        return len(sequence)
+
+    lengths_sum = 0
+    for start, end in pairwise("A" + sequence):
+        segments = find_directional_paths(start, end)
+        min_path_len = min(calculate_directional_paths_length(segment + "A", depth - 1) for segment in segments)
+        lengths_sum += min_path_len
+
+    return lengths_sum
 
 
 def get_instructions(directional_robots_count: int) -> int:
@@ -137,50 +122,18 @@ def get_instructions(directional_robots_count: int) -> int:
         entry_path_segments = [find_numerical_paths(start, target) for start, target in pairwise("A" + code)]
         paths = join_segments(entry_path_segments)
 
-        for _ in range(directional_robots_count):
-            new_paths = []
-
-            for path in paths:
-                segments = [find_directional_paths(start, target) for start, target in pairwise("A" + path)]
-                new_paths.append(join_segments(segments))
-
-            flatten_paths = list(chain(*new_paths))
-            shortest_path_len = min(len(path) for path in flatten_paths)
-            paths = [path for path in flatten_paths if len(path) == shortest_path_len]
-
-        code_paths[code] = paths[0]
+        code_paths[code] = min(
+            calculate_directional_paths_length(sequence, directional_robots_count)
+            for sequence in paths
+        )
 
     complexity = 0
-    for code, path in code_paths.items():
+    for code, path_len in code_paths.items():
         code_number = int(re.sub(r"\D", "", code))
-        complexity += code_number * len(path)
+        complexity += code_number * path_len
 
     return complexity
 
-# @cache
-# def button_presses(seq, depth):
-#     if depth == 1:
-#         return len(seq)
-#
-#     if any(c in seq for c in "012345679"):
-#         keypad = numerical_keypad
-#     else:
-#         keypad = directional_keypad
-#
-#     res = 0
-#     for key1, key2 in zip("A" + seq, seq):
-#         shortest_paths = find_paths(key1, key2, keypad)
-#         res += min(button_presses(sp + "A", depth - 1) for sp in shortest_paths)
-#     return res
-#
-# def complexity(code, n_keypads):
-#     return button_presses(code, n_keypads) * int(code[:3])
-#
-# ans1 = sum(complexity(code, 1 + 2 + 1) for code in codes)
-# print(f"part 1: {ans1}")
-#
-# ans2 = sum(complexity(code, 1 + 25 + 1) for code in codes)
-# print(f"part 2: {ans2}")
 
 print(f"Day 21, part 1: {get_instructions(2)}")
-print(f"Day 21, part 2: {get_instructions(26)}")
+print(f"Day 21, part 2: {get_instructions(25)}")
